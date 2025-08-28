@@ -7,7 +7,7 @@ from ai_agent_core.ai_agent import AIAppointmentScheduler
 from ai_agent_core.correct_patient_data_98_features import get_correct_patient_data, set_neighbourhood
 
 # Initialize scheduler
-model_path = r"C:\Users\saksh\OneDrive\Desktop\No-show_Hospital\Medical-Appointment-No-shows-prediction\model_save\no_show_model.pkl"
+model_path = "../Medical_Appointment_No-Show_ML_Model/model_save/no_show_model.pkl"
 scheduler = AIAppointmentScheduler(model_path)
 
 # Test patient data

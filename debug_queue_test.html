@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue API Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .result { margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>Queue API Debug Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Test Backend Health</h3>
+        <button onclick="testBackendHealth()">Test Backend (Port 5050)</button>
+        <div id="backend-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Test ML Service Health</h3>
+        <button onclick="testMLHealth()">Test ML Service (Port 8000)</button>
+        <div id="ml-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Test Queue Endpoint (No Auth)</h3>
+        <button onclick="testQueueEndpoint()">Test /queue/doctor/enter (No Auth)</button>
+        <div id="queue-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Test with JWT Token</h3>
+        <input type="text" id="jwt-token" placeholder="Paste your JWT token here" style="width: 100%; margin-bottom: 10px;">
+        <button onclick="testWithAuth()">Test with Auth</button>
+        <div id="auth-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testBackendHealth() {
+            const resultDiv = document.getElementById('backend-result');
+            try {
+                const response = await fetch('http://localhost:5050/');
+                const data = await response.text();
+                resultDiv.innerHTML = `<div class="success">✅ Backend is running: ${data}</div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Backend error: ${error.message}</div>`;
+            }
+        }
+
+        async function testMLHealth() {
+            const resultDiv = document.getElementById('ml-result');
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const data = await response.json();
+                resultDiv.innerHTML = `<div class="success">✅ ML Service is running: ${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ ML Service error: ${error.message}</div>`;
+            }
+        }
+
+        async function testQueueEndpoint() {
+            const resultDiv = document.getElementById('queue-result');
+            try {
+                const response = await fetch('http://localhost:5050/api/queue/doctor/enter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ doctorId: 'test-doctor' })
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = `<div class="success">✅ Queue endpoint response: ${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Queue endpoint error: ${error.message}</div>`;
+            }
+        }
+
+        async function testWithAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            const token = document.getElementById('jwt-token').value;
+            
+            if (!token) {
+                resultDiv.innerHTML = `<div class="error">❌ Please enter a JWT token</div>`;
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5050/api/queue/doctor/enter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ doctorId: 'test-doctor' })
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = `<div class="success">✅ Auth test response: ${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Auth test error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

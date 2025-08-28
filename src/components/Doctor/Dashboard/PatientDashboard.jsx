@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { FaRegEye } from "react-icons/fa";
 import { clickToCopyClipBoard } from '../../../utils/copyClipBoard';
+import QueueStatus from '../../Patient/QueueStatus/QueueStatus';
 
 const PatientDashboard = () => {
     const { data, isLoading: pIsLoading } = useGetPatientAppointmentsQuery();
@@ -256,7 +257,14 @@ const PatientDashboard = () => {
         },
     ];
     return (
-        <Tabs defaultActiveKey="1" items={items} />
+        <>
+            <div className="row mb-4">
+                <div className="col-md-12">
+                    <QueueStatus />
+                </div>
+            </div>
+            <Tabs defaultActiveKey="1" items={items} />
+        </>
     )
 }
 export default PatientDashboard;

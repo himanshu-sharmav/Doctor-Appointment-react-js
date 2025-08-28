@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Token Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .result { margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        .info { background: #e3f2fd; color: #1565c0; }
+    </style>
+</head>
+<body>
+    <h1>JWT Token Debug Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Check Local Storage Token</h3>
+        <button onclick="checkLocalStorage()">Check Token in Local Storage</button>
+        <div id="localstorage-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Test Token Retrieval</h3>
+        <button onclick="testTokenRetrieval()">Test getToken() Function</button>
+        <div id="token-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Test Queue API with Token</h3>
+        <button onclick="testQueueWithToken()">Test Queue API</button>
+        <div id="queue-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Manual Token Test</h3>
+        <input type="text" id="manual-token" placeholder="Paste token manually" style="width: 100%; margin-bottom: 10px;">
+        <button onclick="testWithManualToken()">Test with Manual Token</button>
+        <div id="manual-result" class="result"></div>
+    </div>
+
+    <script>
+        // Simulate the getToken function from your app
+        function getToken() {
+            if (typeof window === 'undefined') {
+                return null;
+            }
+            return localStorage.getItem('accessToken');
+        }
+
+        function checkLocalStorage() {
+            const resultDiv = document.getElementById('localstorage-result');
+            const token = localStorage.getItem('accessToken');
+            
+            if (token) {
+                resultDiv.innerHTML = `<div class="success">✅ Token found in localStorage: ${token.substring(0, 50)}...</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="error">❌ No accessToken found in localStorage</div>`;
+            }
+        }
+
+        function testTokenRetrieval() {
+            const resultDiv = document.getElementById('token-result');
+            const token = getToken();
+            
+            if (token) {
+                resultDiv.innerHTML = `<div class="success">✅ getToken() returned: ${token.substring(0, 50)}...</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="error">❌ getToken() returned null</div>`;
+            }
+        }
+
+        async function testQueueWithToken() {
+            const resultDiv = document.getElementById('queue-result');
+            const token = getToken();
+            
+            if (!token) {
+                resultDiv.innerHTML = `<div class="error">❌ No token available. Please login first.</div>`;
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5050/api/v1/queue/doctor/enter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ doctorId: 'test-doctor' })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ Queue API Success: ${JSON.stringify(data, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Queue API Error (${response.status}): ${JSON.stringify(data, null, 2)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testWithManualToken() {
+            const resultDiv = document.getElementById('manual-result');
+            const token = document.getElementById('manual-token').value;
+            
+            if (!token) {
+                resultDiv.innerHTML = `<div class="error">❌ Please enter a token</div>`;
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5050/api/v1/queue/doctor/enter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ doctorId: 'test-doctor' })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="success">✅ Manual Token Success: ${JSON.stringify(data, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Manual Token Error (${response.status}): ${JSON.stringify(data, null, 2)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

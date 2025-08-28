@@ -34,8 +34,8 @@ class DatabaseConfig(BaseSettings):
 class MLModelConfig(BaseSettings):
     """ML Model configuration settings."""
     
-    # Model Path
-    MODEL_PATH: str = r"C:\Users\saksh\OneDrive\Desktop\No-show_Hospital\Medical-Appointment-No-shows-prediction\model_save\no_show_model.pkl"
+    # Model Path - Fixed for current project structure
+    MODEL_PATH: str = "../Medical_Appointment_No-Show_ML_Model/model_save/no_show_model.pkl"
     
     # Model Parameters
     FEATURE_COUNT: int = 98
@@ -82,7 +82,7 @@ class HospitalConfig(BaseSettings):
 class APIConfig(BaseSettings):
     """API configuration settings."""
     
-    # Server Settings
+    # Server Settings - Fixed for macOS compatibility (port 5000 used by AirPlay)
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     DEBUG: bool = False

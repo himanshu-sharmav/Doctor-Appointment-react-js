@@ -60,6 +60,7 @@ model Patient {
   Reviews      Reviews[]
   Prescription Prescription[]
   favourites   Favourites[]
+  patientQueue PatientQueue[]
 
   @@map("Patient")
 }
@@ -106,6 +107,9 @@ model Doctor {
   DoctorTimeSlot         DoctorTimeSlot[]
   blogs                  Blogs[]
   reviews                Reviews[]
+  doctorLogs             DoctorLog[]
+  patientQueue           PatientQueue[]
+  appointmentSlots       AppointmentSlot[]
 
   @@map("Doctor")
 }
@@ -265,6 +269,41 @@ model Blogs {
   updatedAt   DateTime @updatedAt
 }
 
+model DoctorLog {
+  id        String   @id @default(uuid())
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id])
+  entryTime DateTime @default(now())
+  exitTime  DateTime?
+
+  @@map("DoctorLog")
+}
+
+model PatientQueue {
+  id        String        @id @default(uuid())
+  patientId String
+  patient   Patient       @relation(fields: [patientId], references: [id])
+  doctorId  String
+  doctor    Doctor        @relation(fields: [doctorId], references: [id])
+  status    QueueStatus   @default(WAITING)
+  createdAt DateTime      @default(now())
+
+  @@map("PatientQueue")
+}
+
+model AppointmentSlot {
+  id         String   @id @default(uuid())
+  doctorId   String
+  doctor     Doctor   @relation(fields: [doctorId], references: [id])
+  startTime  DateTime
+  endTime    DateTime
+  isBooked   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("AppointmentSlot")
+}
+
 enum UserRole {
   admin
   patient
@@ -294,4 +333,9 @@ enum prescriptionStatus {
 enum paymentStatus {
   paid
   unpaid
+}
+
+enum QueueStatus {
+  WAITING
+  SERVED
 }
