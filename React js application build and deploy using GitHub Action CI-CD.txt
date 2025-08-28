@@ -1,0 +1,89 @@
+# React js application build and deploy on EC2 using CI/CD pipeline GitHub Action--------------
+
+
+prerequisite:
+
+a. use my below repos for yml script: Path(.github/workflows--webreact.yml)
+	https://github.com/YugeshKumar01/e-commerce-site-react-js.git
+
+b. Use self-hosted runner
+
+c. Note:- I have not used run test due to some error. we can try with other project.
+	STAGES:
+		- name: Install Dependencies
+      		run: npm ci
+
+    		- name: Run Tests
+      		run: npm test -- --passWithNoTests
+
+    		- name: Build React App
+      		run: npm run build
+
+
+
+Steps:-
+
+1. Login to aws and search EC2 instance.
+2. Click on launch instance and give required details.
+3. Expand Advance details and give below command.
+4. 	
+	#!/bin/bash
+	sudo apt update
+	sudo apt install nodejs -y 
+	sudo apt install npm -y 
+	sudo apt install nginx -y 
+	sudo systemctl start nginx
+
+5. Launch instance. 
+
+6. Login to your github account and use any react js application or fork from my github(e-commerce-site-react-js).
+
+7. Click on Action tab.
+
+8. Then goto "Runner" tab and create new runner.
+
+9. Copy one by one command and connect your ec2 instance to CMD and without login as "sudo su" paste command and run it.
+
+10.Once ruuner is ready then follow below steps. 
+
+11.Click on "new workflow" rename filename and copy yml script from my github repos and do commit changes.
+
+12.Goto setting tab and in the left side click on secret and variable--Action and create repository secrets name as "EC2_IP" and copy ec2 instance public 	ip address and "PRIVATE_KEY" and copy key.pem value and paste it.
+
+13.Open that yml file and replace your ec2 instace public ip address in this line "ssh -i private_key.pem ubuntu@3.110.215.48".
+
+14.And do commit changes.
+
+15.If you get any error. read error carefully and try to search on google or chat gpt and resolve it.
+
+15.Once CI/CD pipeline successfully run each stages.
+
+16.Open new cmd and connect with ec2 instace.
+ 
+17.Run below command.
+
+	sudo nano /etc/nginx/sites-enabled/react-app
+	content:--------
+	server {
+              listen 80;
+              server_name $EC2_IP;
+
+              location / {
+                  root /var/www/react-app/build;
+                  index index.html;
+                  try_files $uri $uri/ /index.html;
+              }
+          }
+
+---------------------------------------------	
+
+	try_files $uri $uri/ /index.html; -------replace this line
+
+	sudo nginx -t
+
+	sudo systemctl restart nginx
+
+	sudo systemctl status nginx
+
+18.Everthing is done now you will be able to access deployed application.
+

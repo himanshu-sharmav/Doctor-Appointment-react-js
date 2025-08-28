@@ -1,0 +1,31 @@
+# Stage 1: Build the application
+FROM node:latest AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+# Install both production and development dependencies
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+# Stage 2: Create the production image
+FROM node:alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/package.json /app/package-lock.json ./
+COPY --from=builder /app/build ./build
+
+# Install only production dependencies
+RUN npm install --production
+# Install serve globally
+RUN npm install -g serve
+EXPOSE 3000
+#CMD ["node", "build/index.html"]
+
+# Specify the command to start serve and serve the build directory
+CMD ["serve", "-s", "build", "-l", "3000"]
