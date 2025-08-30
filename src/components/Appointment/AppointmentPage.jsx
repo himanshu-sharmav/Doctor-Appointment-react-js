@@ -49,9 +49,18 @@ const AppointmentPage = () => {
   const prev = () => { setCurrent(current - 1) };
 
   useEffect(() => {
-    const { firstName, lastName, email, phone, nameOnCard, cardNumber, expiredMonth, cardExpiredYear, cvv, reasonForVisit } = selectValue;
+    const { firstName, lastName, email, phone, reasonForVisit, paymentType, nameOnCard, cardNumber, expiredMonth, cardExpiredYear, cvv } = selectValue;
     const isInputEmpty = !firstName || !lastName || !email || !phone || !reasonForVisit;
-    const isConfirmInputEmpty = !nameOnCard || !cardNumber || !expiredMonth || !cardExpiredYear || !cvv || !isCheck;
+    
+    // For cash payments, only require terms acceptance
+    // For credit card payments, require all card details + terms acceptance
+    let isConfirmInputEmpty;
+    if (paymentType === 'cash') {
+      isConfirmInputEmpty = !isCheck; // Only terms acceptance required for cash
+    } else {
+      isConfirmInputEmpty = !nameOnCard || !cardNumber || !expiredMonth || !cardExpiredYear || !cvv || !isCheck;
+    }
+    
     setIsDisable(isInputEmpty);
     setIsConfirmDisable(isConfirmInputEmpty);
   }, [selectValue, isCheck]);
@@ -67,14 +76,27 @@ const AppointmentPage = () => {
       scheduleDate: selectedDate,
       scheduleTime: selectTime,
     }
-    obj.payment = {
-      paymentType: selectValue.paymentType,
-      paymentMethod: selectValue.paymentMethod,
-      cardNumber: selectValue.cardNumber,
-      cardExpiredYear: selectValue.cardExpiredYear,
-      cvv: selectValue.cvv,
-      expiredMonth: selectValue.expiredMonth,
-      nameOnCard: selectValue.nameOnCard
+    // Handle payment based on payment type
+    if (selectValue.paymentType === 'cash') {
+      obj.payment = {
+        paymentType: 'cash',
+        paymentMethod: 'cash',
+        cardNumber: 'N/A',
+        cardExpiredYear: 'N/A',
+        cvv: 'N/A',
+        expiredMonth: 'N/A',
+        nameOnCard: 'N/A'
+      }
+    } else {
+      obj.payment = {
+        paymentType: selectValue.paymentType,
+        paymentMethod: selectValue.paymentMethod,
+        cardNumber: selectValue.cardNumber,
+        cardExpiredYear: selectValue.cardExpiredYear,
+        cvv: selectValue.cvv,
+        expiredMonth: selectValue.expiredMonth,
+        nameOnCard: selectValue.nameOnCard
+      }
     }
     createAppointmentByUnauthenticateUser(obj)
   }

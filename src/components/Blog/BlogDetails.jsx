@@ -16,13 +16,13 @@ const BlogDetails = () => {
     const { data, isLoading, isError } = useGetSingleBlogQuery(id);
 
     let content = null;
-    if (!isLoading && isError) content = <div>{message.error('Something went Wrong!')}</div>
+    if (!isLoading && isError) content = <div className="text-center text-danger">Something went wrong! Please try again later.</div>
     if (!isLoading && !isError && data?.id === undefined) content = <Empty />
     if (!isLoading && !isError && data?.id) content =
         <div className="card shadow-sm text-center border-0 rounded-bottom">
 
             <div className="flex-column card-header p-0 border-0 d-flex justify-content-center align-items-center" style={{ overflow: 'hidden', maxHeight: '40rem' }}>
-                {data?.img && <img src={data?.img} alt="blog Image" width={800} height={500} className="image-hover w-100 rounded-top" style={{ objectFit: 'cover' }} />}
+                {data?.img && <img src={data?.img} alt="Blog Image" width={800} height={500} className="image-hover w-100 rounded-top" style={{ objectFit: 'cover' }} />}
             </div>
 
             <div className="card-body p-0">
@@ -45,10 +45,12 @@ const BlogDetails = () => {
                 </div>
             </div>
             <div className="d-flex gap-2 ms-2 px-2 py-3">
-                <span className="">Tags:</span>
+                <span className="fw-bold">Related Topics:</span>
                 <div className="d-flex gap-2">
                     {
-                        Array(4).fill(null).map((_item, index) => (<h5 key={index + 2}>#tag{index}</h5>))
+                        ['Healthcare', 'Medical Tips', 'Wellness', 'Prevention'].map((tag, index) => (
+                            <span key={index} className="badge bg-primary">#{tag}</span>
+                        ))
                     }
                 </div>
             </div>

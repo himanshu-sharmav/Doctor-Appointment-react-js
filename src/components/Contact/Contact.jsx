@@ -46,7 +46,7 @@ const Contact = () => {
                                     <FaEnvelope className='icon' />
                                     <div>
                                         <h4>Email:</h4>
-                                        <p>contact@doctorappointment.com</p>
+                                        <p>info@kiethealthcare.com</p>
                                     </div>
                                 </div>
 
@@ -54,11 +54,10 @@ const Contact = () => {
                                     <FaPhoneAlt className='icon' />
                                     <div>
                                         <h4>Call:</h4>
-                                        <p>+88 01751 040425</p>
+                                        <p>+91 98765 43210</p>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
 
                         <div className="col-lg-8">
@@ -110,7 +109,7 @@ const Contact = () => {
                 <div>
                     <div className="container">
                         {/* eslint-disable-next-line */}
-                        <iframe style={{ border: 0, width: "100%", height: "350px" }} src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d12097.433213460943!2d-74.0062269!3d40.7101282!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0xb89d1fe6bc499443!2sDowntown+Conference+Center!5e0!3m2!1smk!2sbg!4v1539943755621" frameborder="0" allowfullscreen></iframe>
+                        <iframe style={{ border: 0, width: "100%", height: "350px" }} src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3500.1234567890123!2d77.12345678901234!3d28.12345678901234!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390ce1234567890%3A0x1234567890abcdef!2sKIET%20Group%20of%20Institutions!5e0!3m2!1sen!2sin!4v1234567890123" frameBorder="0" allowFullScreen title="KIET Group of Institutions Location"></iframe>
                     </div>
                 </div>
             </section>

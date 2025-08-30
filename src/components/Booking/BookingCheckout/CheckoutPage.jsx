@@ -43,60 +43,79 @@ const CheckoutPage = ({ handleChange, selectValue, isCheck, setIsChecked, data, 
                                     Cash
                                 </label>
                             </div>
-                            <di mb-3v className="col-md-6">
-                                <div className="form-group card-label mb-3">
-                                    <label htmlFor="card_name">Name on Card</label>
-                                    <input className="form-control" id="card_name" value={nameOnCard && nameOnCard} type="text" onChange={(e) => handleChange(e)} name='nameOnCard' />
-                                </div>
-                            </di>
-                            <div className="col-md-6">
-                                <div className="form-group card-label mb-3">
-                                    <label htmlFor="card_number">Card Number</label>
-                                    <input className="form-control" id="card_number" value={cardNumber && cardNumber} placeholder="1234  5678  9876  5432" type="number" onChange={(e) => handleChange(e)} name='cardNumber' />
-                                </div>
-                            </div>
-                            <div className="col-md-4">
-                                <div className="form-group card-label mb-3">
-                                    <label htmlFor="expiry_month">Expiry Month</label>
-                                    <input className="form-control" id="expiry_month" value={expiredMonth && expiredMonth} placeholder="MM" type="number" onChange={(e) => handleChange(e)} name='expiredMonth' />
-                                </div>
-                            </div>
-                            <div className="col-md-4">
-                                <div className="form-group card-label mb-3">
-                                    <label htmlFor="expiry_year">Expiry Year</label>
-                                    <input className="form-control" id="expiry_year" value={cardExpiredYear && cardExpiredYear} placeholder="YY" type="number" onChange={(e) => handleChange(e)} name='cardExpiredYear' />
-                                </div>
-                            </div>
-                            <div className="col-md-4">
-                                <div className="form-group card-label mb-3">
-                                    <label htmlFor="cvv">CVV</label>
-                                    <input className="form-control" id="cvv" type="number" value={cvv && cvv} onChange={(e) => handleChange(e)} name='cvv' />
-                                </div>
-                            </div>
                         </div>
 
-                        <div className="d-flex gap-2 mt-3 mb-3">
-                            <div>
-                                <input type="radio"
-                                    name="paymentMethod"
-                                    value="paypal"
-                                    onChange={(e) => handleChange(e)}
-                                    checked={paymentMethod === 'paypal'}
-                                />
-                                <span className="checkmark ms-3"></span>
-                                Paypal
+                        {/* Card Details - Only show when Credit Card is selected */}
+                        {paymentType === 'creditCard' && (
+                            <div className='row mt-3'>
+                                <div className="col-md-6 mb-3">
+                                    <div className="form-group card-label mb-3">
+                                        <label htmlFor="card_name">Name on Card</label>
+                                        <input className="form-control" id="card_name" value={nameOnCard && nameOnCard} type="text" onChange={(e) => handleChange(e)} name='nameOnCard' />
+                                    </div>
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                    <div className="form-group card-label mb-3">
+                                        <label htmlFor="card_number">Card Number</label>
+                                        <input className="form-control" id="card_number" value={cardNumber && cardNumber} placeholder="1234  5678  9876  5432" type="number" onChange={(e) => handleChange(e)} name='cardNumber' />
+                                    </div>
+                                </div>
+                                <div className="col-md-4 mb-3">
+                                    <div className="form-group card-label mb-3">
+                                        <label htmlFor="expiry_month">Expiry Month</label>
+                                        <input className="form-control" id="expiry_month" value={expiredMonth && expiredMonth} placeholder="MM" type="number" onChange={(e) => handleChange(e)} name='expiredMonth' />
+                                    </div>
+                                </div>
+                                <div className="col-md-4 mb-3">
+                                    <div className="form-group card-label mb-3">
+                                        <label htmlFor="expiry_year">Expiry Year</label>
+                                        <input className="form-control" id="expiry_year" value={cardExpiredYear && cardExpiredYear} placeholder="YY" type="number" onChange={(e) => handleChange(e)} name='cardExpiredYear' />
+                                    </div>
+                                </div>
+                                <div className="col-md-4 mb-3">
+                                    <div className="form-group card-label mb-3">
+                                        <label htmlFor="cvv">CVV</label>
+                                        <input className="form-control" id="cvv" type="number" value={cvv && cvv} onChange={(e) => handleChange(e)} name='cvv' />
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <input type="radio"
-                                    name="paymentMethod"
-                                    value="payoneer"
-                                    onChange={(e) => handleChange(e)}
-                                    checked={paymentMethod === 'payoneer'}
-                                />
-                                <span className="checkmark ms-3"></span>
-                                Payoneer
+                        )}
+
+                        {/* Cash Payment Notice - Show when Cash is selected */}
+                        {paymentType === 'cash' && (
+                            <div className="alert alert-info mt-3">
+                                <i className="fas fa-info-circle me-2"></i>
+                                <strong>Cash Payment Selected</strong>
+                                <p className="mb-0 mt-2">You have chosen to pay in cash. Please bring the exact amount to your appointment. No card details are required.</p>
                             </div>
-                        </div>
+                        )}
+
+                        {/* Payment Method - Only show for Credit Card payments */}
+                        {paymentType === 'creditCard' && (
+                            <div className="d-flex gap-2 mt-3 mb-3">
+                                <div>
+                                    <input type="radio"
+                                        name="paymentMethod"
+                                        value="paypal"
+                                        onChange={(e) => handleChange(e)}
+                                        checked={paymentMethod === 'paypal'}
+                                    />
+                                    <span className="checkmark ms-3"></span>
+                                    Paypal
+                                </div>
+                                <div>
+                                    <input type="radio"
+                                        name="paymentMethod"
+                                        value="payoneer"
+                                        onChange={(e) => handleChange(e)}
+                                        checked={paymentMethod === 'payoneer'}
+                                    />
+                                    <span className="checkmark ms-3"></span>
+                                    Payoneer
+                                </div>
+                            </div>
+                        )}
+
                         <div className="terms-accept">
                             <div className="custom-checkbox">
                                 <input

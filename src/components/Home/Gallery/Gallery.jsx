@@ -16,8 +16,8 @@ const Gallery = () => {
         <section className="gallery container">
             <div className="text-center mb-5">
                 <div className="section-title mb-3">
-                    <h2>Gallery</h2>
-                    <p>Explore our state-of-the-art medical facilities and healthcare environment through our comprehensive gallery.</p>
+                    <h2>Medical Facility Gallery</h2>
+                    <p>Explore our state-of-the-art medical facilities, advanced equipment, and healthcare environment through our comprehensive gallery showcasing modern healthcare delivery.</p>
                 </div>
             </div>
 
@@ -29,7 +29,7 @@ const Gallery = () => {
                                 <div className="col-lg-3 col-md-4 col-sm-12" key={index + 55}>
                                     <div className="gallery-item">
                                         <div className="galelry-lightbox d-flex justify-content-center align-items-center">
-                                            <Image src={item} alt="" className="w-100" style={{objectFit:'cover',maxHeight:'280px', minHeight:'280px'}}/>
+                                            <Image src={item} alt="Medical Facility" className="w-100" style={{objectFit:'cover',maxHeight:'280px', minHeight:'280px'}}/>
                                         </div>
                                     </div>
                                 </div>
