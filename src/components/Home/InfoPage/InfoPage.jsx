@@ -45,9 +45,9 @@ const InfoPage = () => {
                                         <h4>Operating Hours</h4>
                                         <small className='text-secondary'>Service Schedule</small>
                                         <ul className='list-group list-group-flush'>
-                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Monday - Wednesday : </p> <p>8:00 AM - 6:00 PM</p></li>
-                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Thursday - Friday : </p> <p>9:00 AM - 6:00 PM</p></li>
-                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Saturday - Sunday : </p> <p>10:00 AM - 5:00 PM</p></li>
+                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Mon - Wed : </p> <p>8:00 AM - 6:00 PM</p></li>
+                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Thu - Fri : </p> <p>9:00 AM - 6:00 PM</p></li>
+                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Sat - Sun : </p> <p>10:00 AM - 5:00 PM</p></li>
                                         </ul>
                                     </div>
                                 </div>
