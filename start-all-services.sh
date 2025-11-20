@@ -100,6 +100,17 @@ echo "   PID: $FRONTEND_PID"
 echo "   Logs: logs/frontend.log"
 sleep 5
 
+# 4. Start Face Recognition
+echo -e "${BLUE}4️⃣  Starting Face Recognition System (Python)...${NC}"
+cd Doctor_Face_Recognition
+source ../Hospital_Scheduling_With_AI/venv/bin/activate
+python run.py > ../logs/face-recognition.log 2>&1 &
+FACE_PID=$!
+echo "   PID: $FACE_PID"
+echo "   Logs: logs/face-recognition.log"
+cd ..
+sleep 3
+
 echo ""
 echo "⏳ Waiting for services to be ready..."
 echo ""
@@ -111,7 +122,7 @@ wait_for_service "http://localhost:3000" "Frontend"
 
 echo ""
 echo "🎉 =========================================="
-echo "🎉  All Services Started Successfully!"
+echo "🎉  All 4 Services Started Successfully!"
 echo "🎉 =========================================="
 echo ""
 echo "📊 Service Status:"
@@ -131,6 +142,11 @@ echo -e "${GREEN}✅ Frontend${NC}"
 echo "   URL: http://localhost:3000"
 echo "   PID: $FRONTEND_PID"
 echo ""
+echo -e "${GREEN}✅ Face Recognition System${NC}"
+echo "   Status: Monitoring webcam"
+echo "   Controls: Q=Quit, E=Exit mode, I=Entry mode"
+echo "   PID: $FACE_PID"
+echo ""
 echo "📝 Default Login Credentials:"
 echo ""
 echo "   Admin:"
@@ -145,15 +161,17 @@ echo "   Patient:"
 echo "   Email: john.smith@example.com"
 echo "   Password: patient123"
 echo ""
-echo "🎥 To start Face Recognition:"
-echo "   cd Doctor_Face_Recognition"
-echo "   source ../Hospital_Scheduling_With_AI/venv/bin/activate"
-echo "   python run.py"
+echo "🎥 Face Recognition Doctors:"
+echo "   D101: Dr. Saksham (Cardiologist)"
+echo "   D102: Dr. Himanshu (Dermatologist)"
+echo "   D103: Dr. Gungun (Surgeon)"
+echo "   D104: Dr. Sakshi (Pediatrician)"
 echo ""
 echo "📋 Process IDs saved to: logs/pids.txt"
 echo "$BACKEND_PID" > logs/pids.txt
 echo "$ML_PID" >> logs/pids.txt
 echo "$FRONTEND_PID" >> logs/pids.txt
+echo "$FACE_PID" >> logs/pids.txt
 echo ""
 echo "🛑 To stop all services, run: ./stop-all-services.sh"
 echo ""
@@ -161,13 +179,14 @@ echo "📊 View logs:"
 echo "   Backend: tail -f logs/backend.log"
 echo "   ML Service: tail -f logs/ml-service.log"
 echo "   Frontend: tail -f logs/frontend.log"
+echo "   Face Recognition: tail -f logs/face-recognition.log"
 echo ""
 echo "🌐 Opening browser..."
 sleep 2
 open http://localhost:3000
 
 echo ""
-echo "✨ System is ready! Press Ctrl+C to stop monitoring..."
+echo "✨ All 4 services are ready! Press Ctrl+C to stop monitoring..."
 echo ""
 
 # Monitor processes
@@ -182,6 +201,10 @@ while true; do
     fi
     if ! kill -0 $FRONTEND_PID 2>/dev/null; then
         echo -e "${RED}❌ Frontend stopped unexpectedly${NC}"
+        break
+    fi
+    if ! kill -0 $FACE_PID 2>/dev/null; then
+        echo -e "${RED}❌ Face Recognition stopped unexpectedly${NC}"
         break
     fi
     sleep 5

@@ -30,7 +30,9 @@ class Config:
     PHOTO_DIR = os.getenv('PHOTO_DIR', './storage/photos')
     
     # Cooldown settings (seconds)
-    COOLDOWN_TIME = 10
+    # For demo/presentation: Set to 300 (5 minutes) or higher
+    # For production: Set to 60 (1 minute)
+    COOLDOWN_TIME = int(os.getenv('COOLDOWN_TIME', '300'))  # Default: 5 minutes
     
     @classmethod
     def validate(cls):

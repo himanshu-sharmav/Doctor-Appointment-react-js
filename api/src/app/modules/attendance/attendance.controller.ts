@@ -1,6 +1,14 @@
 import { Request, Response } from 'express';
-import prisma from '../../../config/prisma';
+import prisma from '../../../shared/prisma';
 import httpStatus from 'http-status';
+
+// Mapping between Face Recognition IDs and Database Doctor IDs
+const FACE_RECOGNITION_MAPPING: { [key: string]: string } = {
+    'D101': 'sarah.johnson@example.com',      // Dr. Saksham -> Dr. Sarah Johnson (Cardiologist)
+    'D102': 'michael.chen@example.com',       // Dr. Himanshu -> Dr. Michael Chen (Dermatologist)
+    'D103': 'emily.rodriguez@example.com',    // Dr. Gungun -> Dr. Emily Rodriguez (Surgeon)
+    'D104': 'lisa.thompson@example.com',      // Dr. Sakshi -> Dr. Lisa Thompson (Pediatrician)
+};
 
 // Mark doctor entry
 export const markDoctorEntry = async (req: Request, res: Response) => {
@@ -20,20 +28,25 @@ export const markDoctorEntry = async (req: Request, res: Response) => {
 
         const extractedDoctorId = doctorIdMatch[0];
 
-        // Find doctor by email pattern or create mapping
-        const doctor = await prisma.doctor.findFirst({
-            where: {
-                OR: [
-                    { id: { contains: extractedDoctorId } },
-                    { email: { contains: name.toLowerCase().replace('dr_', '').replace('_', '') } }
-                ]
-            }
+        // Get mapped email from face recognition ID
+        const mappedEmail = FACE_RECOGNITION_MAPPING[extractedDoctorId];
+        
+        if (!mappedEmail) {
+            return res.status(httpStatus.NOT_FOUND).json({
+                success: false,
+                message: `No mapping found for Face Recognition ID: ${extractedDoctorId}. Please add mapping in attendance controller.`
+            });
+        }
+
+        // Find doctor by mapped email
+        const doctor = await prisma.doctor.findUnique({
+            where: { email: mappedEmail }
         });
 
         if (!doctor) {
             return res.status(httpStatus.NOT_FOUND).json({
                 success: false,
-                message: `Doctor not found for ID: ${doctor_id}. Please ensure doctor exists in database.`
+                message: `Doctor not found in database for email: ${mappedEmail}. Face Recognition ID: ${extractedDoctorId}`
             });
         }
 
@@ -118,20 +131,25 @@ export const markDoctorExit = async (req: Request, res: Response) => {
 
         const extractedDoctorId = doctorIdMatch[0];
 
-        // Find doctor
-        const doctor = await prisma.doctor.findFirst({
-            where: {
-                OR: [
-                    { id: { contains: extractedDoctorId } },
-                    { email: { contains: name.toLowerCase().replace('dr_', '').replace('_', '') } }
-                ]
-            }
+        // Get mapped email from face recognition ID
+        const mappedEmail = FACE_RECOGNITION_MAPPING[extractedDoctorId];
+        
+        if (!mappedEmail) {
+            return res.status(httpStatus.NOT_FOUND).json({
+                success: false,
+                message: `No mapping found for Face Recognition ID: ${extractedDoctorId}`
+            });
+        }
+
+        // Find doctor by mapped email
+        const doctor = await prisma.doctor.findUnique({
+            where: { email: mappedEmail }
         });
 
         if (!doctor) {
             return res.status(httpStatus.NOT_FOUND).json({
                 success: false,
-                message: `Doctor not found for ID: ${doctor_id}`
+                message: `Doctor not found in database for email: ${mappedEmail}`
             });
         }
 
