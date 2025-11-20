@@ -23,3 +23,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .env
+
+# Face Recognition Storage - Don't commit attendance data and photos
+Doctor_Face_Recognition/storage/photos/
+Doctor_Face_Recognition/storage/attendance.csv
+Doctor_Face_Recognition/storage/attendance.jsonl
+Doctor_Face_Recognition/storage/embeddings.npz
+
+# Logs
+logs/

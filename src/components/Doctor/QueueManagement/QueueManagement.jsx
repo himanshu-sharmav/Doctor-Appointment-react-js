@@ -12,18 +12,43 @@ const QueueManagement = () => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    // Check if doctor is currently available from localStorage
-    if (user?.id) {
-      const savedStatus = localStorage.getItem(`doctor_${user.id}_available`);
-      if (savedStatus === 'true') {
-        setIsAvailable(true);
+    // Check attendance status from backend
+    const checkAttendanceStatus = async () => {
+      if (user?.id) {
+        try {
+          // Check attendance API
+          const response = await fetch(`http://localhost:5050/api/v1/attendance/status/${user.id}`);
+          const data = await response.json();
+          
+          if (data.success && data.data.isPresent) {
+            // Doctor is marked present via face recognition
+            setIsAvailable(true);
+            localStorage.setItem(`doctor_${user.id}_available`, 'true');
+            setMessage('✅ Automatically activated - Face recognition detected your entry');
+          } else {
+            // Check localStorage as fallback
+            const savedStatus = localStorage.getItem(`doctor_${user.id}_available`);
+            if (savedStatus === 'true') {
+              setIsAvailable(true);
+            }
+          }
+        } catch (error) {
+          // Fallback to localStorage if API fails
+          const savedStatus = localStorage.getItem(`doctor_${user.id}_available`);
+          if (savedStatus === 'true') {
+            setIsAvailable(true);
+          }
+        }
       }
-    }
+    };
+    
+    checkAttendanceStatus();
+    
     // Load queue data if available
     if (isAvailable) {
       loadQueueData();
     }
-  }, [isAvailable, user?.id]);
+  }, [user?.id]);
 
   const loadQueueData = async () => {
     if (!user?.id) return;
@@ -44,10 +69,29 @@ const QueueManagement = () => {
     
     try {
       setLoading(true);
+      
+      // Call queue API
       const response = await doctorEnter();
       
+      // Also mark attendance as ENTRY
+      try {
+        await fetch('http://localhost:5050/api/v1/attendance/entry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            doctor_id: user.id,
+            name: `${user.firstName}_${user.lastName}`,
+            type: user.specialization || 'Doctor',
+            similarity: '1.0',
+            timestamp: new Date().toISOString()
+          })
+        });
+      } catch (attendanceError) {
+        console.log('Attendance marking failed (non-critical):', attendanceError);
+      }
+      
       setIsAvailable(true);
-      setMessage(response.message || 'Successfully entered hospital');
+      setMessage(response.message || '✅ Practice Mode activated - Attendance marked as PRESENT');
       localStorage.setItem(`doctor_${user.id}_available`, 'true');
       
       await loadQueueData();
@@ -80,10 +124,29 @@ const QueueManagement = () => {
     
     try {
       setLoading(true);
+      
+      // Call queue API
       const response = await doctorExit();
       
+      // Also mark attendance as EXIT
+      try {
+        await fetch('http://localhost:5050/api/v1/attendance/exit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            doctor_id: user.id,
+            name: `${user.firstName}_${user.lastName}`,
+            type: user.specialization || 'Doctor',
+            similarity: '1.0',
+            timestamp: new Date().toISOString()
+          })
+        });
+      } catch (attendanceError) {
+        console.log('Attendance marking failed (non-critical):', attendanceError);
+      }
+      
       setIsAvailable(false);
-      setMessage(response.message);
+      setMessage(response.message || '✅ Practice Mode deactivated - Attendance marked as ABSENT');
       setQueueData(null);
       localStorage.removeItem(`doctor_${user.id}_available`);
     } catch (error) {
