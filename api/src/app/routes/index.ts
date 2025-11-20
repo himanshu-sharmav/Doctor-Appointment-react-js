@@ -12,6 +12,7 @@ import { BlogRoutes } from '../modules/blog/blog.route';
 import { MedicineRouter } from '../modules/medicines/medicine.route';
 import { ContactRouter } from '../modules/contact/contact.route';
 import { QueueRouter } from '../modules/queue/queue.route';
+import { AttendanceRouter } from '../modules/attendance/attendance.route';
 
 const router = express.Router();
 
@@ -63,6 +64,10 @@ const moduleRoutes = [
     {
         path: '/queue',
         route: QueueRouter
+    },
+    {
+        path: '/attendance',
+        route: AttendanceRouter
     }
 ]
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

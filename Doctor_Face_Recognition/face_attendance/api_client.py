@@ -32,15 +32,19 @@ class APIClient:
             if self.api_token:
                 headers['Authorization'] = f'Bearer {self.api_token}'
             
+            # Determine endpoint based on event type
+            event_type = attendance_record.get('event', 'entry')
+            endpoint = f"{self.api_url}/{event_type}"
+            
             # Send POST request
             response = requests.post(
-                self.api_url,
+                endpoint,
                 json=attendance_record,
                 headers=headers,
                 timeout=10
             )
             
-            if response.status_code == 200:
+            if response.status_code == 200 or response.status_code == 201:
                 return True, "Event sent successfully"
             else:
                 return False, f"API error: {response.status_code} - {response.text}"
