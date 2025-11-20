@@ -8,7 +8,7 @@ const OurDoctors = () => {
     const doctors = data?.doctors;
 
     let content = null;
-    if (!isLoading && isError) content = <div>Something Went Wrong !</div>
+    if (!isLoading && isError) content = <div className="text-center text-danger">Something went wrong! Please try again later.</div>
     if (!isLoading && !isError && doctors?.length === 0) content = <div><Empty /></div>
     if (!isLoading && !isError && doctors?.length > 0) content =
         <>

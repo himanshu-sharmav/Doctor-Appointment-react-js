@@ -29,7 +29,7 @@ const Testimonial = () => {
 
                             <p className="text-start text-secondary" style={{minHeight:'72px', overflow:'hidden'}}> {truncate(item?.description, 150)}</p>
                             <div>
-                                <p className='recomended'><FaCheckDouble /> Recomended</p>
+                                <p className='recomended'><FaCheckDouble /> Recommended</p>
                                 <StarRatings
                                     rating={5}
                                     starRatedColor="#f4c150"

@@ -16,7 +16,7 @@ const InfoPage = () => {
                                 We are committed to providing exceptional healthcare services with a focus on patient care and medical excellence. Our team of experienced professionals ensures that you receive the highest quality medical attention in a comfortable and caring environment.
                             </p>
                             <div className="text-center">
-                                <Link href="/" className="more-btn">Learn More <i className="bx bx-chevron-right"></i></Link>
+                                <Link to="/service" className="more-btn">Learn More <i className="bx bx-chevron-right"></i></Link>
                             </div>
                         </div>
                     </div>
@@ -26,28 +26,28 @@ const InfoPage = () => {
                                 <div className="col-xl-4 d-flex align-items-stretch">
                                     <div className="icon-box mt-4 mt-xl-0">
                                         <FaHouseUser className="icon"/>
-                                        <h4>Appointment</h4>
-                                        <small className='text-secondary'>24 Hours Service</small>
-                                        {/* <p>Consequuntur sunt aut quasi enim aliquam quae harum pariatur laboris nisi ut aliquip</p> */}
+                                        <h4>Appointment Booking</h4>
+                                        <small className='text-secondary'>24/7 Online Service</small>
+                                        <p>Book appointments anytime, anywhere with our user-friendly online scheduling system designed for your convenience.</p>
                                     </div>
                                 </div>
                                 <div className="col-xl-4 d-flex align-items-stretch">
                                     <div className="icon-box mt-4 mt-xl-0">
                                         <FaHeadset className="icon"/>
-                                        <h4>Emegency Cases</h4>
-                                        <h6 className='text-secondary'>+88 01751 040425</h6>
+                                        <h4>Emergency Response</h4>
+                                        <h6 className='text-secondary'>+91 98765 43210</h6>
                                         <p>Our emergency response team is available 24/7 to provide immediate medical assistance when you need it most. Quick response times and professional care.</p>
                                     </div>
                                 </div>
                                 <div className="col-xl-4 d-flex align-items-stretch">
                                     <div className="icon-box mt-4 mt-xl-0">
                                         <FaClock className="icon"/>
-                                        <h4>Working Hours</h4>
-                                        <small className='text-secondary'>Timing schedule</small>
+                                        <h4>Operating Hours</h4>
+                                        <small className='text-secondary'>Service Schedule</small>
                                         <ul className='list-group list-group-flush'>
-                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Sun - Wed : </p> <p>8:00 - 17: 00</p></li>
-                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Thus - Fri : </p> <p>9:00 - 17: 00</p></li>
-                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Sat - Sun : </p> <p>10:00 - 17: 00</p></li>
+                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Mon - Wed : </p> <p>8:00 AM - 6:00 PM</p></li>
+                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Thu - Fri : </p> <p>9:00 AM - 6:00 PM</p></li>
+                                        <li className="list-group-item d-flex justify-content-between text-nowrap" ><p>Sat - Sun : </p> <p>10:00 AM - 5:00 PM</p></li>
                                         </ul>
                                     </div>
                                 </div>

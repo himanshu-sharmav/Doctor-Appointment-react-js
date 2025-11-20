@@ -1,0 +1,26 @@
+{
+  "D104": {
+    "name": "Dr_Sakshi",
+    "type": "Pediatrician",
+    "folder": "D104_Dr_Sakshi_Pediatrician",
+    "image_count": 1
+  },
+  "D101": {
+    "name": "Dr_Saksham",
+    "type": "Cardiologist",
+    "folder": "D101_Dr_Saksham_Cardiologist",
+    "image_count": 1
+  },
+  "D102": {
+    "name": "Dr_Himanshu",
+    "type": "Dermatologist",
+    "folder": "D102_Dr_Himanshu_Dermatologist",
+    "image_count": 1
+  },
+  "D103": {
+    "name": "Dr_Gungun",
+    "type": "Surgeon",
+    "folder": "D103_Dr_Gungun_Surgeon",
+    "image_count": 1
+  }
+}

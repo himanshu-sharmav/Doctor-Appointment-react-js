@@ -29,14 +29,14 @@ const BookDoctor = () => {
 			message.error(error?.data?.message)
 		}
 		if (isSuccess) {
-			message.success('Successfully Favourite Adde')
+			message.success('Successfully Added to Favorites')
 		}
 	}, [isSuccess, fIsError, FIsLoading, error?.data?.message])
 
 	// what to render 
 	let content = null;
-	if (!isLoading && isError) content = <div>Something Went Wrong !</div>
-	if (!isLoading && !isError && doctors?.length === 0) content = <div>Empty</div>
+	if (!isLoading && isError) content = <div className="text-center text-danger">Something went wrong! Please try again later.</div>
+	if (!isLoading && !isError && doctors?.length === 0) content = <div className="text-center text-muted">No doctors available at the moment.</div>
 	if (!isLoading && !isError && doctors?.length > 0) content =
 		<>
 			{

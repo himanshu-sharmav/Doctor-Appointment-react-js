@@ -55,15 +55,15 @@ const Footer = () => {
 								<div className="footer-contact-info">
 									<div className="footer-address">
 										<span><i className="fas fa-map-marker-alt"></i></span>
-										<p> 121, Mirzapure Union office,<br /> Sylhet, Bangladesh 03214 </p>
+										<p>KIET Group of Institutions<br />Ghaziabad, Uttar Pradesh, India</p>
 									</div>
 									<p>
 										<i className="fas fa-phone-alt"></i>
-										+88 017 51 040425
+										+91 98765 43210
 									</p>
 									<p className="mb-0">
 										<i className="fas fa-envelope"></i>
-										contact@doctorappointment.com
+										info@kiethealthcare.com
 									</p>
 								</div>
 							</div>
@@ -74,26 +74,25 @@ const Footer = () => {
 			<div className="footer-bottom">
 				<div className="container-fluid">
 
-					<div className="copyright">
-						<div className="row">
-							<div className="col-md-6 col-lg-6">
-								<div className="copyright-text">
-									<p className="mb-0"><a href="templateshub.net">
-										<div className="copyRight text-center">
-											<p>Copyright {(new Date()).getFullYear()} All Rights Reserved</p>
-										</div></a></p>
-								</div>
-							</div>
-							<div className="col-md-6 col-lg-6">
-								<div className="copyright-menu">
-									<ul className="policy-menu d-flex gap-2 justify-content-center">
-										<Link to={'/'} className='text-white'>Terms and Conditions</Link>
-										<Link to={'/'} className='text-white'>Policy</Link>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</div>
+					                    <div className="copyright">
+                        <div className="row">
+                            <div className="col-md-6 col-lg-6">
+                                <div className="copyright-text">
+                                    <div className="copyRight text-center">
+                                        <p className="mb-0">© {(new Date()).getFullYear()} KIET Healthcare System. All Rights Reserved.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="col-md-6 col-lg-6">
+                                <div className="copyright-menu">
+                                    <ul className="policy-menu d-flex gap-2 justify-content-center">
+                                        <Link to={'/about'} className='text-white'>About Us</Link>
+                                        <Link to={'/contact'} className='text-white'>Contact</Link>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
 				</div>
 			</div>

@@ -19,7 +19,7 @@ const About = () => {
     const doctors = doctorData?.doctors;
 
     let doctorContent = null;
-    if (!DoctorIsLoading && doctorIsError) doctorContent = <div>Something Went Wrong !</div>
+    if (!DoctorIsLoading && doctorIsError) doctorContent = <div className="text-center text-danger">Something went wrong! Please try again later.</div>
     if (!DoctorIsLoading && !doctorIsError && doctors?.length === 0) doctorContent = <div><Empty /></div>
     if (!DoctorIsLoading && !doctorIsError && doctors?.length > 0) doctorContent =
         <>
@@ -63,24 +63,32 @@ const About = () => {
     return (
         <>
             <Header />
-            <SubHeader title="about us" subtitle="Learn about our mission to provide accessible, high-quality healthcare services to communities worldwide." />
+            <SubHeader title="About Us" subtitle="Learn about our mission to provide accessible, high-quality healthcare services to communities worldwide." />
             <div className="container" style={{ marginBottom: 100, marginTop: 100 }}>
                 <div className="row p-5">
                     <div className="col-lg-4">
                         <div className='section-title text-center'>
-                            <h2 className='text-uppercase'>Our Doctors Acheivement</h2>
-                            <p className='form-text m-0'>Our doctors have received numerous awards and recognition for their exceptional contributions to healthcare and patient care excellence.</p>
+                            <h2 className='text-uppercase'>Our Healthcare Excellence</h2>
+                            <p className='form-text m-0'>Our healthcare system has been recognized for excellence in patient care, medical innovation, and community health improvement initiatives.</p>
                         </div>
                     </div>
 
                     <div className="col-lg-8">
 
-                        <img src={ImageHeading} alt="" className="img-fluid rounded shadow" />
+                        <img src={ImageHeading} alt="Healthcare Excellence" className="img-fluid rounded shadow" />
                     </div>
                 </div>
             </div>
 
             <div className="container" style={{ marginBottom: 100, marginTop: 100 }}>
+                <div className="row">
+                    <div className="col-lg-6">
+                        <div className='mb-4 section-title text-center'>
+                            <h2 className='text-uppercase'>Latest Healthcare Insights</h2>
+                            <p className='form-text m-0'>Stay informed with the latest medical research, healthcare trends, and wellness tips from our expert medical professionals.</p>
+                        </div>
+                    </div>
+                </div>
                 <div className="row">
                     {content}
                 </div>
@@ -90,8 +98,8 @@ const About = () => {
                 <div className="row align-items-center">
                     <div className="col-lg-4">
                         <div className='section-title text-center'>
-                            <h2 className='text-uppercase'>Our Doctors Acheivement</h2>
-                            <p className='form-text m-0'>Lorem ipsum dolor sit amet.</p>
+                            <h2 className='text-uppercase'>Our Medical Achievements</h2>
+                            <p className='form-text m-0'>Our healthcare system has been recognized for excellence in patient care, medical innovation, and community health improvement initiatives.</p>
                         </div>
                     </div>
                     <div className="col-lg-8">
@@ -100,7 +108,7 @@ const About = () => {
                                 Array(6).fill(null).map((_, id) => (
                                     <div className="col-lg-4 col-md-6 col-sm-6" key={id + 3}>
                                         <div className="award-img">
-                                            <img src={img} alt="" className="img-fluid" />
+                                            <img src={img} alt="Medical Achievement" className="img-fluid" />
                                         </div>
                                     </div>
                                 ))

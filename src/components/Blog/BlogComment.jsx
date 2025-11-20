@@ -11,15 +11,20 @@ const BlogComment = () => {
                 Array(4).fill(null).map((_item, index) => (
                     <div className='d-flex gap-3 mb-3' key={index + 5}>
                         <div>
-                            <img src={userImg} width={80} className='' alt='user imge' />
+                            <img src={userImg} width={80} className='' alt='User Profile' />
                         </div>
                         <div>
                             <div className='mb-2'>
-                                <h6>Andrew Simon</h6>
-                                <p className='form-text mb-0'>August 2023</p>
+                                <h6>{['Dr. Sarah Johnson', 'Michael Chen', 'Dr. David Brown', 'Emily Rodriguez'][index]}</h6>
+                                <p className='form-text mb-0'>{['August 2023', 'September 2023', 'October 2023', 'November 2023'][index]}</p>
                             </div>
                             <p className='form-text'>
-                                This is an excellent article about healthcare! The information provided is very helpful and well-researched. I particularly appreciate the practical tips and professional insights shared here. Looking forward to more informative content like this.
+                                {[
+                                    'This is an excellent article about healthcare! The information provided is very helpful and well-researched. I particularly appreciate the practical tips and professional insights shared here.',
+                                    'As a healthcare professional, I find this content extremely valuable. The research-based approach and practical recommendations make it a great resource for both patients and practitioners.',
+                                    'Very informative and well-written article. The healthcare tips provided are practical and easy to implement in daily life. Looking forward to more content like this.',
+                                    'Excellent healthcare insights! The article covers important topics that everyone should be aware of. The professional perspective adds credibility to the information shared.'
+                                ][index]}
                             </p>
                         </div>
                     </div>
