@@ -121,7 +121,7 @@ model Appointments {
   doctorId  String?
   doctor    Doctor?  @relation(fields: [doctorId], references: [id])
 
-  trackingId         String?             @unique
+  trackingId         String?              @unique
   firstName          String?
   lastName           String?
   email              String?
@@ -131,16 +131,18 @@ model Appointments {
   scheduleDate       String?
   scheduleTime       String?
   reasonForVisit     String?
-  status             String?             @default("pending")
-  paymentStatus      paymentStatus?      @default(unpaid)
-  prescriptionStatus prescriptionStatus? @default(notIssued)
-  isFollowUp         Boolean?            @default(false)
+  status             String?              @default("pending")
+  paymentStatus      paymentStatus?       @default(unpaid)
+  prescriptionStatus prescriptionStatus?  @default(notIssued)
+  isFollowUp         Boolean?             @default(false)
   patientType        String?
+  source             AppointmentSource?   @default(REGULAR)
 
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  prescription Prescription[]
-  payment      Payment[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  prescription     Prescription[]
+  payment          Payment[]
+  appointmentSlots AppointmentSlot[]
 
   @@map("Appointments")
 }
@@ -292,14 +294,16 @@ model PatientQueue {
 }
 
 model AppointmentSlot {
-  id         String   @id @default(uuid())
-  doctorId   String
-  doctor     Doctor   @relation(fields: [doctorId], references: [id])
-  startTime  DateTime
-  endTime    DateTime
-  isBooked   Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String        @id @default(uuid())
+  doctorId      String
+  doctor        Doctor        @relation(fields: [doctorId], references: [id])
+  appointmentId String?
+  appointment   Appointments? @relation(fields: [appointmentId], references: [id])
+  startTime     DateTime
+  endTime       DateTime
+  isBooked      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   @@map("AppointmentSlot")
 }
@@ -338,4 +342,9 @@ enum paymentStatus {
 enum QueueStatus {
   WAITING
   SERVED
+}
+
+enum AppointmentSource {
+  REGULAR
+  QUEUE
 }

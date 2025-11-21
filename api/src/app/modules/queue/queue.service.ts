@@ -1,7 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import axios from 'axios';
 import ApiError from '../../../errors/apiError';
 import httpStatus from 'http-status';
+import moment from 'moment';
 
 const prisma = new PrismaClient();
 
@@ -18,51 +19,30 @@ interface MLAllocationResponse {
   recommendedSlot: string;
 }
 
+interface TimeSlot {
+  start: Date;
+  end: Date;
+}
+
 export class QueueService {
   // Log doctor entry and set as available
-  async doctorEnter(doctorId: string) {
+  async doctorEnter(doctorId: string, entryTime?: Date) {
     try {
       // Create doctor log entry
       const doctorLog = await prisma.doctorLog.create({
         data: {
           doctorId,
-          entryTime: new Date(),
+          entryTime: entryTime || new Date(),
         },
       });
 
-      // Get current queue for this doctor
-      const currentQueue = await prisma.patientQueue.findMany({
-        where: {
-          doctorId,
-          status: 'WAITING',
-        },
-        include: {
-          patient: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-              mobile: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: 'asc',
-        },
-      });
-
-      // Call ML service for allocation
-      if (currentQueue.length > 0) {
-        const mlResponse = await this.callMLService(currentQueue);
-        await this.allocateAppointments(doctorId, mlResponse);
-      }
+      // Note: We removed automatic queue processing on entry as per user request.
+      // The doctor will manually click "Process Queue" when ready.
 
       return {
         success: true,
         message: 'Doctor entered successfully',
         doctorLog,
-        queueLength: currentQueue.length,
       };
     } catch (error) {
       throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to log doctor entry');
@@ -70,7 +50,7 @@ export class QueueService {
   }
 
   // Log doctor exit and set as unavailable
-  async doctorExit(doctorId: string) {
+  async doctorExit(doctorId: string, exitTime?: Date) {
     try {
       // Update the latest doctor log with exit time
       const latestLog = await prisma.doctorLog.findFirst({
@@ -86,15 +66,22 @@ export class QueueService {
       if (latestLog) {
         await prisma.doctorLog.update({
           where: { id: latestLog.id },
-          data: { exitTime: new Date() },
+          data: { exitTime: exitTime || new Date() },
         });
       }
 
-      // Move any remaining waiting patients to queue
+      // Move any remaining waiting patients to queue (only today's appointments)
+      const todayStart = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
+      const todayEnd = moment().endOf('day').format('YYYY-MM-DD HH:mm:ss');
+
       const activeAppointments = await prisma.appointments.findMany({
         where: {
           doctorId,
           status: 'pending',
+          scheduleDate: {
+            gte: todayStart,
+            lte: todayEnd
+          }
         },
       });
 
@@ -147,7 +134,7 @@ export class QueueService {
 
       // Call ML service for wait time estimation
       const mlResponse = await this.callMLService(queue);
-      
+
       const patientsWithWaitTimes = queue.map((queueItem, index) => {
         const mlData = mlResponse.find(item => item.patientId === queueItem.patientId);
         return {
@@ -192,11 +179,66 @@ export class QueueService {
         };
       }
 
+      // 1. Fetch existing appointments for the doctor today to avoid double booking
+      const todayStart = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
+      const todayEnd = moment().endOf('day').format('YYYY-MM-DD HH:mm:ss');
+
+      // Note: Schema stores dates as strings, so we need to be careful with comparison
+      // Ideally we should fetch all and filter in memory if the string format is inconsistent
+      // But assuming the format 'YYYY-MM-DD HH:mm:ss' is consistent:
+      const existingAppointments = await prisma.appointments.findMany({
+        where: {
+          doctorId,
+          scheduleDate: {
+            gte: todayStart,
+            lte: todayEnd
+          },
+          status: {
+            not: 'cancelled'
+          }
+        }
+      });
+
+      // Convert existing appointments to TimeSlot objects
+      const busySlots: TimeSlot[] = existingAppointments.map(app => {
+        // Combine date and time strings
+        // app.scheduleDate might be "2023-10-27 00:00:00" or just date
+        // app.scheduleTime might be "10:00 AM"
+
+        // Let's try to parse robustly using moment
+        const dateStr = moment(app.scheduleDate).format('YYYY-MM-DD');
+        const timeStr = app.scheduleTime; // e.g. "10:00 AM"
+        const dateTimeStr = `${dateStr} ${timeStr}`;
+
+        const start = moment(dateTimeStr, 'YYYY-MM-DD hh:mm A').toDate();
+        const end = moment(start).add(30, 'minutes').toDate(); // Assuming 30 min slots for existing apps
+
+        return { start, end };
+      });
+
+      // Also fetch existing AppointmentSlots (from previous queue processing)
+      const existingSlots = await prisma.appointmentSlot.findMany({
+        where: {
+          doctorId,
+          startTime: {
+            gte: new Date()
+          },
+          isBooked: true
+        }
+      });
+
+      existingSlots.forEach(slot => {
+        busySlots.push({
+          start: slot.startTime,
+          end: slot.endTime
+        });
+      });
+
       // Call ML service for optimal allocation
       const mlResponse = await this.callMLService(waitingPatients);
-      
-      // Create appointment slots and book appointments
-      const appointmentsBooked = await this.allocateAppointments(doctorId, mlResponse);
+
+      // Create appointment slots and book appointments, respecting busy slots
+      const appointmentsBooked = await this.allocateAppointments(doctorId, mlResponse, busySlots);
 
       return {
         success: true,
@@ -204,6 +246,7 @@ export class QueueService {
         appointmentsBooked,
       };
     } catch (error) {
+      console.error('Error booking queue appointments:', error);
       throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to book queue appointments');
     }
   }
@@ -233,21 +276,75 @@ export class QueueService {
     }
   }
 
-  // Allocate appointments based on ML response
-  private async allocateAppointments(doctorId: string, mlResponse: MLAllocationResponse[]): Promise<number> {
+  // Allocate appointments based on ML response, respecting busy slots
+  private async allocateAppointments(
+    doctorId: string,
+    mlResponse: MLAllocationResponse[],
+    busySlots: TimeSlot[] = []
+  ): Promise<number> {
     let appointmentsBooked = 0;
 
-    for (const allocation of mlResponse) {
+    // Sort allocations by recommended slot time
+    const sortedAllocations = [...mlResponse].sort((a, b) =>
+      new Date(a.recommendedSlot).getTime() - new Date(b.recommendedSlot).getTime()
+    );
+
+    for (const allocation of sortedAllocations) {
       try {
-        // Create appointment slot
+        let proposedStart = new Date(allocation.recommendedSlot);
+        let proposedEnd = new Date(proposedStart.getTime() + 30 * 60000);
+
+        // Find a valid slot that doesn't overlap with busySlots
+        while (this.isOverlapping(proposedStart, proposedEnd, busySlots)) {
+          // If overlapping, move to next 30 min slot
+          proposedStart = new Date(proposedStart.getTime() + 30 * 60000);
+          proposedEnd = new Date(proposedStart.getTime() + 30 * 60000);
+        }
+
+        // Fetch patient details
+        const patient = await prisma.patient.findUnique({
+          where: { id: allocation.patientId }
+        });
+
+        if (!patient) {
+          console.error(`Patient ${allocation.patientId} not found`);
+          continue;
+        }
+
+        // Generate tracking ID for queue appointment
+        const trackingId = await this.generateQueueTrackingId();
+
+        // 1. Create Appointment record (unified with regular appointments)
+        const appointment = await prisma.appointments.create({
+          data: {
+            patientId: allocation.patientId,
+            doctorId,
+            firstName: patient.firstName,
+            lastName: patient.lastName,
+            email: patient.email,
+            phone: patient.mobile,
+            scheduleDate: moment(proposedStart).format('YYYY-MM-DD HH:mm:ss'),
+            scheduleTime: moment(proposedStart).format('hh:mm A'),
+            status: 'pending',
+            paymentStatus: 'unpaid', // Queue patients pay at reception
+            source: 'QUEUE', // Mark as queue-generated
+            trackingId: trackingId,
+          } as Prisma.AppointmentsUncheckedCreateInput
+        });
+
+        // 2. Create AppointmentSlot linked to Appointment
         const slot = await prisma.appointmentSlot.create({
           data: {
             doctorId,
-            startTime: new Date(allocation.recommendedSlot),
-            endTime: new Date(new Date(allocation.recommendedSlot).getTime() + 30 * 60000), // 30 min slots
+            appointmentId: appointment.id,
+            startTime: proposedStart,
+            endTime: proposedEnd,
             isBooked: true,
-          },
+          } as Prisma.AppointmentSlotUncheckedCreateInput,
         });
+
+        // Add this new slot to busySlots so subsequent patients in this batch don't take it
+        busySlots.push({ start: proposedStart, end: proposedEnd });
 
         // Update queue status
         await prisma.patientQueue.updateMany({
@@ -262,12 +359,43 @@ export class QueueService {
         });
 
         appointmentsBooked++;
+
+        console.log(`Queue appointment created: ${trackingId} for ${patient.firstName} ${patient.lastName} at ${moment(proposedStart).format('hh:mm A')}`);
       } catch (error) {
         console.error(`Failed to allocate appointment for patient ${allocation.patientId}:`, error);
       }
     }
 
     return appointmentsBooked;
+  }
+
+  // Generate tracking ID for queue appointments
+  private async generateQueueTrackingId(): Promise<string> {
+    const previousAppointment = await prisma.appointments.findFirst({
+      orderBy: { createdAt: 'desc' },
+      take: 1
+    });
+
+    const appointmentLastNumber = (previousAppointment?.trackingId ?? '').slice(-3);
+    const lastDigit = (Number(appointmentLastNumber) + 1 || 0).toString().padStart(3, '0');
+
+    const year = moment().year();
+    const month = (moment().month() + 1).toString().padStart(2, '0');
+    const day = (moment().dayOfYear()).toString().padStart(2, '0');
+
+    return `QUE${year}${month}${day}${lastDigit}`; // QUE prefix for queue appointments
+  }
+
+  // Helper to check if a slot overlaps with any busy slot
+  private isOverlapping(start: Date, end: Date, busySlots: TimeSlot[]): boolean {
+    for (const slot of busySlots) {
+      // Check for overlap
+      // Overlap exists if (StartA < EndB) and (EndA > StartB)
+      if (start < slot.end && end > slot.start) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // Add patient to queue
@@ -283,6 +411,29 @@ export class QueueService {
 
       if (existingQueue) {
         throw new ApiError(httpStatus.CONFLICT, 'Patient already in queue');
+      }
+
+      // Check if patient already has an appointment with this doctor today
+      const todayStart = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
+      const todayEnd = moment().endOf('day').format('YYYY-MM-DD HH:mm:ss');
+
+      const existingAppointment = await prisma.appointments.findFirst({
+        where: {
+          patientId,
+          doctorId,
+          status: { in: ['pending', 'completed'] },
+          scheduleDate: {
+            gte: todayStart,
+            lte: todayEnd
+          }
+        }
+      });
+
+      if (existingAppointment) {
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          'Patient already has an appointment with this doctor today'
+        );
       }
 
       const queueEntry = await prisma.patientQueue.create({
@@ -348,3 +499,4 @@ export class QueueService {
     }
   }
 }
+

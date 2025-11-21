@@ -10,7 +10,7 @@ import config from "../../../config";
 const createAppointment = async (payload: any): Promise<Appointments | null | any> => {
 
     const { patientInfo, payment } = payload;
-    if(patientInfo.patientId){
+    if (patientInfo.patientId) {
         const isUserExist = await prisma.patient.findUnique({
             where: {
                 id: patientInfo.patientId
@@ -31,21 +31,24 @@ const createAppointment = async (payload: any): Promise<Appointments | null | an
         throw new ApiError(httpStatus.NOT_FOUND, 'Doctor Account is not found !!')
     }
     patientInfo['paymentStatus'] = paymentStatus.paid;
-  
+
     const result = await prisma.$transaction(async (tx) => {
+        // Generate tracking ID atomically within transaction to prevent collisions
         const previousAppointment = await tx.appointments.findFirst({
             orderBy: { createdAt: 'desc' },
-            take: 1
+            take: 1,
+            select: { trackingId: true }
         });
-        const appointmentLastNumber = (previousAppointment?.trackingId ?? '').slice(-3);
-        const lastDigit = (Number(appointmentLastNumber) + 1 || 0).toString().padStart(3, '0');
 
-        // Trcking Id To be ==> First 3 Letter Of User  + current year + current month + current day + unique number (Matched Previous Appointment).
-        const first3DigitName = patientInfo?.firstName?.slice(0, 3).toUpperCase();
+        const appointmentLastNumber = (previousAppointment?.trackingId ?? '').slice(-3);
+        const lastDigit = (Number(appointmentLastNumber) + 1 || 1).toString().padStart(3, '0');
+
+        // Tracking Id => First 3 Letter Of User + current year + current month + current day + unique number
+        const first3DigitName = (patientInfo?.firstName?.slice(0, 3) || 'PAT').toUpperCase();
         const year = moment().year();
         const month = (moment().month() + 1).toString().padStart(2, '0');
         const day = (moment().dayOfYear()).toString().padStart(2, '0');
-        const trackingId = first3DigitName + year + month + day + lastDigit || '001';
+        const trackingId = `${first3DigitName}${year}${month}${day}${lastDigit}`;
         patientInfo['trackingId'] = trackingId;
 
         const appointment = await tx.appointments.create({
@@ -57,7 +60,16 @@ const createAppointment = async (payload: any): Promise<Appointments | null | an
         });
         const { paymentMethod, paymentType } = payment;
         const docFee = Number(isDoctorExist.price);
-        const vat = (15 / 100) * (docFee + 10)
+
+        // Validate doctor price
+        if (isNaN(docFee) || docFee < 0) {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid doctor consultation fee');
+        }
+
+        // Fix payment precision - round to 2 decimal places
+        const vat = Math.round((15 / 100) * (docFee + 10) * 100) / 100;
+        const totalAmount = Math.round((vat + docFee + 10) * 100) / 100;
+
         if (appointment.id) {
             await tx.payment.create({
                 data: {
@@ -65,9 +77,9 @@ const createAppointment = async (payload: any): Promise<Appointments | null | an
                     bookingFee: 10,
                     paymentMethod: paymentMethod,
                     paymentType: paymentType,
-                    vat: vat,
+                    vat: Math.round(vat),
                     DoctorFee: docFee,
-                    totalAmount: (vat + docFee),
+                    totalAmount: Math.round(totalAmount),
                 }
             })
         }
@@ -79,27 +91,35 @@ const createAppointment = async (payload: any): Promise<Appointments | null | an
             status: appointment.status,
             paymentStatus: appointment.paymentStatus,
             prescriptionStatus: appointment.prescriptionStatus,
-            scheduleDate:moment(appointment.scheduleDate).format('LL'),
-            scheduleTime:appointment.scheduleTime,
+            scheduleDate: moment(appointment.scheduleDate).format('LL'),
+            scheduleTime: appointment.scheduleTime,
             doctorImg: appointment?.doctor?.img,
             doctorFirstName: appointment?.doctor?.firstName,
             doctorLastName: appointment?.doctor?.lastName,
-            specialization:appointment?.doctor?.specialization,
-            designation:appointment?.doctor?.designation,
-            college:appointment?.doctor?.college,
-            patientImg:appointment?.patient?.img,
-            patientfirstName:appointment?.patient?.firstName,
-            patientLastName:appointment?.patient?.lastName,
+            specialization: appointment?.doctor?.specialization,
+            designation: appointment?.doctor?.designation,
+            college: appointment?.doctor?.college,
+            patientImg: appointment?.patient?.img,
+            patientfirstName: appointment?.patient?.firstName,
+            patientLastName: appointment?.patient?.lastName,
             dateOfBirth: moment().diff(moment(appointment?.patient?.dateOfBirth), 'years'),
-            bloodGroup:appointment?.patient?.bloodGroup,
-            city:appointment?.patient?.city,
-            state:appointment?.patient?.state,
-            country:appointment?.patient?.country
+            bloodGroup: appointment?.patient?.bloodGroup,
+            city: appointment?.patient?.city,
+            state: appointment?.patient?.state,
+            country: appointment?.patient?.country
         }
         const replacementObj = appointmentObj;
         const subject = `Appointment Confirm With Dr ${appointment?.doctor?.firstName + ' ' + appointment?.doctor?.lastName} at ${appointment.scheduleDate} + ' ' + ${appointment.scheduleTime}`
         const toMail = `${appointment.email + ',' + appointment.doctor?.email}`;
-        EmailtTransporter({ pathName, replacementObj, toMail, subject })
+
+        // Send email with error handling - don't fail appointment if email fails
+        try {
+            await EmailtTransporter({ pathName, replacementObj, toMail, subject });
+        } catch (emailError) {
+            console.error('Failed to send appointment confirmation email:', emailError);
+            // Continue - appointment is still created even if email fails
+        }
+
         return appointment;
     });
     return result;
@@ -107,7 +127,7 @@ const createAppointment = async (payload: any): Promise<Appointments | null | an
 
 const createAppointmentByUnAuthenticateUser = async (payload: any): Promise<Appointments | null> => {
     const { patientInfo, payment } = payload;
-    if(patientInfo.patientId){
+    if (patientInfo.patientId) {
         const isUserExist = await prisma.patient.findUnique({
             where: {
                 id: patientInfo.patientId
@@ -160,8 +180,8 @@ const createAppointmentByUnAuthenticateUser = async (payload: any): Promise<Appo
             status: appointment.status,
             paymentStatus: appointment.paymentStatus,
             prescriptionStatus: appointment.prescriptionStatus,
-            scheduleDate:moment(appointment.scheduleDate).format('LL'),
-            scheduleTime:appointment.scheduleTime,
+            scheduleDate: moment(appointment.scheduleDate).format('LL'),
+            scheduleTime: appointment.scheduleTime,
         }
         const pathName = path.join(__dirname, '../../../../template/meeting.html')
         const replacementObj = appointmentObj;

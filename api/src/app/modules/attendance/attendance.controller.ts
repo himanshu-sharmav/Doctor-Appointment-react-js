@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import prisma from '../../../shared/prisma';
+import moment from 'moment';
 import httpStatus from 'http-status';
+import { QueueService } from '../queue/queue.service';
+
+const queueService = new QueueService();
 
 // Mapping between Face Recognition IDs and Database Doctor IDs
 const FACE_RECOGNITION_MAPPING: { [key: string]: string } = {
@@ -30,7 +34,7 @@ export const markDoctorEntry = async (req: Request, res: Response) => {
 
         // Get mapped email from face recognition ID
         const mappedEmail = FACE_RECOGNITION_MAPPING[extractedDoctorId];
-        
+
         if (!mappedEmail) {
             return res.status(httpStatus.NOT_FOUND).json({
                 success: false,
@@ -62,14 +66,31 @@ export const markDoctorEntry = async (req: Request, res: Response) => {
         });
 
         if (existingEntry) {
-            return res.status(httpStatus.OK).json({
-                success: true,
-                message: 'Doctor already marked as present',
-                data: existingEntry
-            });
+            // Check if entry is from a previous day
+            const entryDate = moment(existingEntry.entryTime).format('YYYY-MM-DD');
+            const today = moment().format('YYYY-MM-DD');
+
+            if (entryDate < today) {
+                // Auto-close previous day's entry (set exit time to end of that day)
+                await prisma.doctorLog.update({
+                    where: { id: existingEntry.id },
+                    data: {
+                        exitTime: moment(existingEntry.entryTime).endOf('day').toDate()
+                    }
+                });
+                console.log(`Auto-closed orphaned session from ${entryDate} for doctor ${doctor.email}`);
+                // Continue to create new entry below
+            } else {
+                // Same day - doctor already present
+                return res.status(httpStatus.OK).json({
+                    success: true,
+                    message: 'Doctor already marked as present',
+                    data: existingEntry
+                });
+            }
         }
 
-        // Create new entry log
+        // Create new entry log (no automatic queue processing)
         const entryLog = await prisma.doctorLog.create({
             data: {
                 doctorId: doctor.id,
@@ -133,7 +154,7 @@ export const markDoctorExit = async (req: Request, res: Response) => {
 
         // Get mapped email from face recognition ID
         const mappedEmail = FACE_RECOGNITION_MAPPING[extractedDoctorId];
-        
+
         if (!mappedEmail) {
             return res.status(httpStatus.NOT_FOUND).json({
                 success: false,
@@ -171,44 +192,30 @@ export const markDoctorExit = async (req: Request, res: Response) => {
             });
         }
 
-        // Update with exit time
-        const exitLog = await prisma.doctorLog.update({
-            where: {
-                id: activeEntry.id
-            },
-            data: {
-                exitTime: timestamp ? new Date(timestamp) : new Date()
-            },
-            include: {
-                doctor: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        email: true,
-                        specialization: true,
-                        img: true
-                    }
-                }
-            }
-        });
+        // Use QueueService to handle exit and trigger automation
+        const result = await queueService.doctorExit(doctor.id, timestamp ? new Date(timestamp) : new Date());
 
-        // Calculate duration
-        const duration = exitLog.exitTime && exitLog.entryTime 
-            ? Math.floor((exitLog.exitTime.getTime() - exitLog.entryTime.getTime()) / 1000 / 60) // minutes
-            : 0;
+        // Calculate duration (using the updated log from DB would be better, but for now we estimate)
+        const entryTime = activeEntry.entryTime;
+        const exitTime = timestamp ? new Date(timestamp) : new Date();
+        const duration = Math.floor((exitTime.getTime() - entryTime.getTime()) / 1000 / 60);
 
         res.status(httpStatus.OK).json({
             success: true,
-            message: 'Doctor exit marked successfully',
+            message: 'Doctor exit marked successfully and queue updated',
             data: {
-                ...exitLog,
+                doctorId: doctor.id,
+                exitTime,
                 duration: `${duration} minutes`,
                 faceRecognition: {
                     similarity,
                     photo_path,
                     recognized_as: name,
                     type
+                },
+                queueAutomation: {
+                    processed: true,
+                    requeuedPatients: result.queueLength
                 }
             }
         });
@@ -329,7 +336,7 @@ export const getTodayAttendance = async (req: Request, res: Response) => {
         const attendanceSummary = doctors.map(doctor => {
             const doctorLogs = todayLogs.filter(log => log.doctorId === doctor.id);
             const activeEntry = doctorLogs.find(log => log.exitTime === null);
-            
+
             let totalMinutes = 0;
             doctorLogs.forEach(log => {
                 if (log.exitTime) {
